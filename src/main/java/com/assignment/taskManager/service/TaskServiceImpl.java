@@ -2,6 +2,7 @@ package com.assignment.taskManager.service;
 
 import com.assignment.taskManager.dao.TaskDao;
 import com.assignment.taskManager.dao.TaskUpdateLogDao;
+import com.assignment.taskManager.helper.TaskServiceHelper;
 import com.assignment.taskManager.modals.Task;
 import com.assignment.taskManager.modals.TaskField;
 import com.assignment.taskManager.modals.TaskStatus;
@@ -23,6 +24,8 @@ public class TaskServiceImpl implements TaskService {
     TaskDao taskDao;
     @Autowired
     TaskUpdateLogDao taskUpdateLogDao;
+    @Autowired
+    TaskServiceHelper taskServiceHelper;
     public Task addTask (Task task) {
         logger.info("Inside method addTask, method starts...");
 
@@ -50,45 +53,26 @@ public class TaskServiceImpl implements TaskService {
         return taskDao.findAll();
     }
 
-    private LinkedHashMap<String, String> populateField (String fieldName, String oldValue, String newValue) {
-        LinkedHashMap<String, String> updatedField = new LinkedHashMap<>();
-        updatedField.put(String.valueOf(TaskField.UPDATED_FIELD), fieldName);
-        updatedField.put(String.valueOf(TaskField.OLD_VALUE), oldValue);
-        updatedField.put(String.valueOf(TaskField.NEW_VALUE), newValue);
-
-        return updatedField;
-    }
     public Task updateTaskById (int id, Task newTask) {
+        logger.info("Inside method updateTaskById, method starts for task id: " + id);
+
         Task task = taskDao.findById(id).orElse(null);
 
         if (task==null) {
+            logger.info("Inside method updateTaskById, task not found hence throwing exception for task id: " + id);
             throw new RuntimeException("Task not found");
         } else {
             TaskUpdateLog taskUpdateLog = new TaskUpdateLog();
+
+            logger.info("Inside method updateTaskById, creating update log for task id: " + id);
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
             taskUpdateLog.setUpdated_timestamp(simpleDateFormat.format(new Date()));
-
-            List<LinkedHashMap<String, String>> updatedFields = new ArrayList<>();
-
-            if (!Objects.isNull(newTask.getTitle())) {
-                updatedFields.add(populateField(String.valueOf(TaskField.TITLE), task.getTitle(), newTask.getTitle()));
-                task.setTitle(newTask.getTitle());
-            }
-
-            if (!Objects.isNull(newTask.getEta())) {
-                updatedFields.add(populateField(String.valueOf(TaskField.ETA), task.getEta(), newTask.getEta()));
-                task.setEta(newTask.getEta());
-            }
-
-            if (!Objects.isNull(task.getStatus())) {
-                updatedFields.add(populateField(String.valueOf(TaskField.STATUS), String.valueOf(task.getStatus()), String.valueOf(newTask.getStatus())));
-                task.setStatus(newTask.getStatus());
-            }
-
-            taskUpdateLog.setUpdated_fields(String.valueOf(updatedFields));
+            String updatedFields = taskServiceHelper.getUpdatedFieldsForTask(task, newTask);
+            taskUpdateLog.setUpdated_fields(updatedFields);
             taskUpdateLog.setTask(task);
             taskUpdateLogDao.save(taskUpdateLog);
 
+            logger.info("Inside method updateTaskById, update log created saving task for task id: " + id);
             return taskDao.save(task);
         }
     }

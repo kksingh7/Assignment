@@ -17,6 +17,7 @@ public class TaskUpdateLogController {
     @Autowired
     TaskUpdateLogService taskUpdateLogService;
     @GetMapping("/getTaskUpdateLog/{taskId}")
+    //@Cacheable(value = "taskUpdateLog",key = "#id")
     public ResponseEntity<List<TaskUpdateLog>> getTaskUpdateLogByTaskId(@PathVariable int taskId) {
         try {
             List<TaskUpdateLog> taskUpdateLogList = taskUpdateLogService.getTaskUpdateLogByTaskId(taskId);

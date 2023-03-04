@@ -22,6 +22,7 @@ public class Task {
     // Estimated date of completion
     private String eta;
 
+    // Status of task
     @Enumerated(EnumType.ORDINAL)
     private TaskStatus status;
 
